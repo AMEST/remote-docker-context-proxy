@@ -48,6 +48,7 @@ def manageProxies(remote_docker_host_name, published_ports, listen_system_ports)
         
 
 def mainLoop(docker_host, listen_system_ports):
+    global ACTIVE_PROXIES
     logging.info("Initialize docker remote proxy to `%s`" %docker_host)
     docker_service = DockerService(docker_host)
     remote_docker_host_name = docker_service.getRemoteHost()
@@ -59,10 +60,12 @@ def mainLoop(docker_host, listen_system_ports):
                 manageProxies(remote_docker_host_name, published_ports, listen_system_ports)
             except Exception as e:
                 logging.error(e)
-                raise e
             time.sleep(60)
     except KeyboardInterrupt:
+        for proxy in ACTIVE_PROXIES:
+            proxy.stop()
         logging.info('Docker remote proxy stopped!')
+        return
 
 if __name__ == "__main__":
     logging.info('Starting docker remote proxy!')

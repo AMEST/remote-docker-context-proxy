@@ -1,9 +1,11 @@
 from socketserver import BaseRequestHandler, TCPServer
-from socket import socket, AF_INET, SOCK_STREAM
+from socket import socket, AF_INET, SOCK_STREAM, gethostbyname, error
 import threading
 import logging
 from enum import Enum, auto
-
+import fcntl, os
+import errno
+import time
 
 class ProxyType(Enum):
     TCP = auto()
@@ -23,24 +25,41 @@ class TcpProxySockHandler(BaseRequestHandler):
 
     def handle(self):
         # self.request is the TCP socket connected to the client
-        self.data = self.request.recv(1024)
-        self.Logger.info("Passing data from: {}".format(self.client_address[0]))
-
+        self.Logger.info("Passing data from: %s -> %s:%s" %(self.client_address[0], self.PROXY_HOST, self.PROXY_PORT))
         # Create a socket to the localhost server
         sock = socket(AF_INET, SOCK_STREAM)
         # Try to connect to the server and send data
         try:
             sock.connect((self.PROXY_HOST, self.PROXY_PORT))
-            sock.sendall(self.data)
+            self.transferData(self.request, sock)
             # Receive data from the server
-            while 1:
-                received = sock.recv(1024)
-                if not received:
-                    break
-                # Send back received data
-                self.request.sendall(received)
+            self.Logger.info("Receive data: %s <- %s:%s" %(self.client_address[0], self.PROXY_HOST, self.PROXY_PORT))
+            self.transferData(sock, self.request)
         finally:
             sock.close()
+
+    def transferData(self, sock1 : socket, sock2 : socket, max_read_try = 1, receive_message_length = 4096):
+        read_try = 0
+        fcntl.fcntl(sock1, fcntl.F_SETFL, os.O_NONBLOCK)
+        while True:
+            try:
+                msg = sock1.recv(receive_message_length)
+                if not msg:
+                    break
+                sock2.sendall(msg)
+                if len(msg) < receive_message_length :
+                    return
+            except error as e:
+                err = e.args[0]
+                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                    if read_try > max_read_try:
+                        return
+                    read_try += 1
+                    time.sleep(1)
+                    continue
+                raise e
+
+        
 
 
 class ProxyServer():
@@ -55,7 +74,7 @@ class ProxyServer():
         HOST = "127.0.0.1"
 
         class ThreadedTcpProxyHandler(TcpProxySockHandler):
-            PROXY_HOST = proxy_host
+            PROXY_HOST = gethostbyname(proxy_host)
             PROXY_PORT = proxy_port
 
         self.server = TCPServer((HOST, proxy_port), ThreadedTcpProxyHandler)
