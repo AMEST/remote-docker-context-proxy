@@ -6,6 +6,10 @@ This application bind and listen local ports and proxy connections to remote doc
 
 Connect to remote docker (wia context or manual `--host` / `env DOCKER_HOST`), getting containers with published tcp ports and proxy requests from localhost to remote docker host.
 
+Supported OS:
+- Macos
+- Linux
+
 # Using
 
 1. Install python 3
