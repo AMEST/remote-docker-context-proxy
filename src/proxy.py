@@ -1,4 +1,4 @@
-from socketserver import BaseRequestHandler, TCPServer
+from socketserver import BaseRequestHandler, TCPServer, ThreadingMixIn
 from socket import socket, AF_INET, SOCK_STREAM, gethostbyname, error
 import threading
 import logging
@@ -38,30 +38,38 @@ class TcpProxySockHandler(BaseRequestHandler):
         finally:
             sock.close()
 
-    def transferData(self, sock1 : socket, sock2 : socket, max_read_try = 1, receive_message_length = 4096):
+    def transferData(self, sock1 : socket, sock2 : socket, max_read_try = 10, receive_message_length = 2048):
         read_try = 0
+        last_try = False
         fcntl.fcntl(sock1, fcntl.F_SETFL, os.O_NONBLOCK)
         while True:
             try:
                 msg = sock1.recv(receive_message_length)
                 if not msg:
-                    break
-                sock2.sendall(msg)
-                if len(msg) < receive_message_length :
                     return
+                sock2.sendall(msg)
+
+                read_try = 0
+                if last_try and len(msg) > 0:
+                    last_try = False
+                if len(msg) < (receive_message_length / 2):
+                    if last_try:
+                        return
+                    else:
+                        last_try = True
             except error as e:
                 err = e.args[0]
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     if read_try > max_read_try:
                         return
                     read_try += 1
-                    time.sleep(1)
+                    time.sleep(0.1)
                     continue
                 raise e
 
+class ThreadedTCPServer(ThreadingMixIn, TCPServer):
+    pass
         
-
-
 class ProxyServer():
 
     def __init__(self, proxy_host, proxy_port, type=ProxyType.TCP):
@@ -77,7 +85,7 @@ class ProxyServer():
             PROXY_HOST = gethostbyname(proxy_host)
             PROXY_PORT = proxy_port
 
-        self.server = TCPServer((HOST, proxy_port), ThreadedTcpProxyHandler)
+        self.server = ThreadedTCPServer((HOST, proxy_port), ThreadedTcpProxyHandler)
         self.ip, self.port = self.server.server_address
         self.logger.info("Creating %s proxy server with listen on %s and proxy to %s:%s", type, proxy_port, proxy_host, proxy_port)
 
