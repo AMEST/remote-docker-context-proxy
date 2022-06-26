@@ -3,7 +3,6 @@ from socket import socket, AF_INET, SOCK_STREAM, gethostbyname, error
 import threading
 import logging
 from enum import Enum, auto
-import fcntl, os
 import errno
 import time
 
@@ -41,7 +40,7 @@ class TcpProxySockHandler(BaseRequestHandler):
     def transferData(self, sock1 : socket, sock2 : socket, max_read_try = 10, receive_message_length = 2048):
         read_try = 0
         last_try = False
-        fcntl.fcntl(sock1, fcntl.F_SETFL, os.O_NONBLOCK)
+        sock1.setblocking(0)
         while True:
             try:
                 msg = sock1.recv(receive_message_length)
@@ -58,14 +57,13 @@ class TcpProxySockHandler(BaseRequestHandler):
                     else:
                         last_try = True
             except error as e:
-                err = e.args[0]
-                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
-                    if read_try > max_read_try:
-                        return
-                    read_try += 1
-                    time.sleep(0.1)
-                    continue
-                raise e
+                if e.errno != errno.EAGAIN and e.errno != errno.EWOULDBLOCK:
+                    raise e
+                if read_try > max_read_try:
+                    return
+                read_try += 1
+                time.sleep(0.1)
+                continue
 
 class ThreadedTCPServer(ThreadingMixIn, TCPServer):
     pass

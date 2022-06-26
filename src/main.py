@@ -17,9 +17,7 @@ logging.getLogger("urllib3").setLevel(logging.INFO)
 logging.getLogger("docker").setLevel(logging.INFO)
 
 def getDockerHostFromContext():
-    current_context_name_cmd = subprocess.run(["docker", "context", "show"], capture_output=True)
-    current_context_name = current_context_name_cmd.stdout.decode().replace("\n", "")
-    current_context_cmd = subprocess.run(["docker", "context", "inspect", current_context_name], capture_output=True)
+    current_context_cmd = subprocess.run(["docker", "context", "inspect"], capture_output=True)
     current_context_json = json.loads(current_context_cmd.stdout.decode())
     return current_context_json[0]["Endpoints"]["docker"]["Host"]
 
@@ -70,7 +68,7 @@ def mainLoop(docker_host, listen_system_ports):
 if __name__ == "__main__":
     logging.info('Starting docker remote proxy!')
     parser = argparse.ArgumentParser(description='Remote docker context proxy')
-    parser.add_argument('--listen-system-ports', action=argparse.BooleanOptionalAction, default=False, help='Listen and Proxy system ports example: 22, 80, 443 etc.!')
+    parser.add_argument('--listen-system-ports', action='store_true', help='Listen and Proxy system ports example: 22, 80, 443 etc.!')
     parser.add_argument('--host', type=str, default=None, help='Docker host uri')
     args = parser.parse_args()
     if DOCKER_HOST_ENV != None:
