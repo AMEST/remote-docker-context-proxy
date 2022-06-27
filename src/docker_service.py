@@ -27,6 +27,7 @@ class DockerService(object):
                 continue
             for port in container.ports:
                 if container.ports[port] == None:
+                    ports.append({"internal":port, "published":int(port.replace("/tcp", "").replace("/udp", ""))})
                     continue
                 publishedPort = container.ports[port][0]["HostPort"]
                 ports.append({"internal":port, "published":int(publishedPort)})
