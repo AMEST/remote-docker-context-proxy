@@ -4,7 +4,6 @@ import subprocess
 import json
 import logging
 import os
-import sys
 import time
 import argparse
 
@@ -45,10 +44,10 @@ def manageProxies(remote_docker_host_name, published_ports, listen_system_ports)
 
         
 
-def mainLoop(docker_host, listen_system_ports):
+def mainLoop(docker_host, listen_system_ports, use_docker_cli):
     global ACTIVE_PROXIES
     logging.info("Initialize docker remote proxy to `%s`" %docker_host)
-    docker_service = DockerService(docker_host)
+    docker_service = DockerService(docker_host, use_docker_cli)
     remote_docker_host_name = docker_service.getRemoteHost()
     
     try:
@@ -69,11 +68,12 @@ if __name__ == "__main__":
     logging.info('Starting docker remote proxy!')
     parser = argparse.ArgumentParser(description='Remote docker context proxy')
     parser.add_argument('--listen-system-ports', action='store_true', help='Listen and Proxy system ports example: 22, 80, 443 etc.!')
+    parser.add_argument('--use-docker-cli', action='store_true', help='Use docker cli instead of python docker client')
     parser.add_argument('--host', type=str, default=None, help='Docker host uri')
     args = parser.parse_args()
     if DOCKER_HOST_ENV != None:
-        mainLoop(DOCKER_HOST_ENV, args.listen_system_ports)
+        mainLoop(DOCKER_HOST_ENV, args.listen_system_ports, args.use_docker_cli)
     elif args.host != None:
-        mainLoop(args.host, args.listen_system_ports)
+        mainLoop(args.host, args.listen_system_ports, args.use_docker_cli)
     else:
-        mainLoop(getDockerHostFromContext(), args.listen_system_ports)
+        mainLoop(getDockerHostFromContext(), args.listen_system_ports, args.use_docker_cli)
