@@ -1,7 +1,16 @@
 import subprocess, json
 
 class DockerCLIWrapper(object):
+    """
+        Docker cli wrapper for getting containers and node information
+        Alternative implementation of docker client and general implementation for windows
+        because default docker client when used ssh connection don't working in windows with ssh-agents
+    """
     def containers(self, all=False):
+        """
+            Getting containers info (id, ports, image, command and other)
+            By default, return only running containers. For get all, set all=True when execute
+        """
         ps_args = ['docker', 'ps', '--format', '"{{json .}}"', '--no-trunc']
         if all:
             ps_args.append('-a')
@@ -14,12 +23,18 @@ class DockerCLIWrapper(object):
         return containers
 
     def info(self):
+        """
+            Get information about docker host
+        """
         info_args = ['docker', 'info', '--format', '"{{json .}}"']
         info = subprocess.run(info_args, capture_output=True)
         return json.loads(info.stdout.decode()[1:-2])
 
 
 class DockerCliWrappedContainer(object):
+    """
+        Docker container information model
+    """
     id = None
     image = None
     command = None

@@ -69,7 +69,7 @@ class ThreadedTCPServer(ThreadingMixIn, TCPServer):
     pass
         
 class ProxyServer():
-
+    
     def __init__(self, proxy_host, proxy_port, type=ProxyType.TCP):
         if(type != ProxyType.TCP):
             raise NotImplementedError("Only TCP Proxy implemented")
