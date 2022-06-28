@@ -9,7 +9,7 @@ Connect to remote docker (wia context or manual `--host` / `env DOCKER_HOST`), g
 Supported OS:
 - Macos
 - Linux
-- Windows (needed cli docker.exe)
+- Windows (needed cli docker.exe, maybe downloaded from https://github.com/StefanScherer/docker-cli-builder/releases/latest)
 
 # Using
 
