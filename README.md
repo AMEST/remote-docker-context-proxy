@@ -1,3 +1,7 @@
+[![Build](https://github.com/AMEST/remote-docker-context-proxy/actions/workflows/build.yml/badge.svg)](https://github.com/AMEST/remote-docker-context-proxy/actions/workflows/build.yml)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/amest/remote-docker-context-proxy)
+![GitHub](https://img.shields.io/github/license/amest/remote-docker-context-proxy)
+
 # Proxy for docker remote context containers
 
 This application bind and listen local ports and proxy connections to remote docker host with associated docker containers
