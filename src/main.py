@@ -68,6 +68,8 @@ def mainLoop(docker_host, listen_system_ports, use_docker_cli):
             try:
                 published_ports = docker_service.getPublishedPorts()
                 manageProxies(remote_docker_host_name, published_ports, listen_system_ports)
+            except KeyboardInterrupt as ke:
+                raise ke
             except Exception as e:
                 logging.error(e)
             time.sleep(60)
